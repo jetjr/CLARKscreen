@@ -16,9 +16,9 @@ Tutorial
 
     [user@host]$ vi config.sh
    
-     * Important: FASTA_DIR, BT2_INDEX, CLARK_DB, and CLARK_DIR must exist prior to executing job and must contain relevent files. For example FASTA_DIR should point to the directory that contains the FASTA files you wish you analyze. BT2_INDEX points to the directory containing the Bowtie2 index files you wish to screen against. CLARK_DIR points to the directory containing the CLARK scripts and CLARK_DB points to the database used for CLARK.
+* Important: FASTA_DIR, BT2_INDEX, CLARK_DB, and CLARK_DIR must exist prior to executing job and must contain relevent files. For example FASTA_DIR should point to the directory that contains the FASTA files you wish you analyze. BT2_INDEX points to the directory containing the Bowtie2 index files you wish to screen against. CLARK_DIR points to the directory containing the CLARK scripts and CLARK_DB points to the database used for CLARK.
 
-    All other directories such as results and standard out/error will be created for you if they do not exist.
+All other directories such as results and standard out/error will be created for you if they do not exist.
 
 3) Execute start_workflow.sh script
 
