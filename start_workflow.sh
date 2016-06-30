@@ -13,6 +13,16 @@ if [[ ! -d "$CLARK_DIR" ]]; then
     exit 1
 fi
 
+if [[ ! -d "$CLARK_DB" ]]; then
+    echo "$CLARK_DB does not exist. You must declare where the CLARK database is  located. Edit config.sh file before you continue. Job terminated."
+    exit 1
+fi
+
+if [[ ! -d "$BT2_INDEX" ]]; then
+    echo "$BT2_INDEX does not exist. You must declare where the Bowtie2 index files are located. Edit config.sh file before you continue. Job terminated."
+    exit 1
+fi
+
 if [[ ! -d "$BT2_OUT_DIR" ]]; then
     echo "$BT2_OUT_DIR does not exist. Directory created for Bowtie2 ouput."
     mkdir -p "$BT2_OUT_DIR"
@@ -48,10 +58,10 @@ while read FASTA; do
 done < $FASTA_LIST
 
 `cp $FASTA_LIST $BT2_OUT_DIR`
+
 cd "$BT2_OUT_DIR"
 export UNMAPPED_LIST="$BT2_OUT_DIR/unmapped-list"
 `sed 's/.fasta/.unmapped/' fasta-list > $UNMAPPED_LIST`
-#ls *.unmapped > $UNMAPPED_LIST
 
 while read UNMAPPED; do
     export UNMAPPED="$UNMAPPED"
