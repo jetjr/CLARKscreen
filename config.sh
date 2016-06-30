@@ -10,7 +10,7 @@ export SCRIPT_DIR="$CWD/scripts"
 export FASTA_DIR="$CWD/fastq/fixed"
 
 #Directory AND basename of Bowtie2 index files
-export BT2_INDEX="$CWD/human-index/human_index"
+export BT2_INDEX="$CWD/bt2_index/human_index"
 
 #Directory to place UNMAPPED reads 
 export BT2_OUT_DIR="$CWD/bt2_unmapped_reads"
