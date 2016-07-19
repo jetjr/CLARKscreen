@@ -1,7 +1,6 @@
 #!/bin/sh
 
 source ./config.sh
-source ./functions.sh
 
 if [[ ! -d "$FASTA_DIR" ]]; then
     echo "$FASTA_DIR does not exist. Directory created, but make sure FASTA files are there before you continue. Job terminated."
@@ -34,33 +33,39 @@ if [[ ! -d "$CLARK_OUT_DIR" ]]; then
     mkdir -p "$CLARK_OUT_DIR"
 fi
 
+if [[ ! -d "$STDERR_DIR" ]]; then
+    echo "$STDERR_DIR does not exist. Directory created for standard error."
+    mkdir -p "$STDERR_DIR"
+fi
+
 if [[ ! -d "$STDOUT_DIR" ]]; then
     echo "$STDOUT_DIR does not exist. Directory created for standard out."
     mkdir -p "$STDOUT_DIR"
 fi
 
-export CWD=$(cd $(dirname "$0") && pwd)
-export STEP_SIZE=1
+cd "$FASTA_DIR"
+export FASTA_LIST="$FASTA_DIR/fasta-list"
+pwd
+ls *.fasta > $FASTA_LIST
+echo "FASTA files to be processed:" `cat $FASTA_LIST`
 
-echo "Finding FASTA files in \"$FASTA_DIR\""
-export FASTA_LIST=$(mktemp)
-find $FASTA_DIR -type f -name \*.fasta > $FASTA_LIST
-echo "FASTA files to be processed:" `cat -n $FASTA_LIST`
-NUM_FILES=$(lc $FASTA_LIST)
+while read FASTA; do
+    export FASTA="$FASTA"
+    NUM_FILES=`wc -l $FASTA_LIST | cut -d ' ' -f 1`
 
-JOBS_ARG=""
-if [[ $NUM_FILES -gt 1 ]]; then
-  JOBS_ARG="-J 1-$NUM_FILES"
-  if [[ $STEP_SIZE -gt 1 ]]; then
-    $JOBS_ARG="$JOBS_ARG:$STEP_SIZE"
-  fi
-fi
+    JOB_ID1=`qsub -v SCRIPT_DIR,BT2_OUT_DIR,BT2_INDEX,FASTA,FASTA_DIR -N Bowtie2 -e "$STDERR_DIR" -o "$STDOUT_DIR" $SCRIPT_DIR/bt2_align.sh`
 
-JOB_ID1=`qsub $JOBS_ARGS -v CWD,SCRIPT_DIR,BT2_OUT_DIR,BT2_INDEX,FASTA_LIST,FASTA_DIR,STEP_SIZE -N Bowtie2 -j -oe -o "$STDOUT_DIR" $SCRIPT_DIR/bt2_align.sh`
+done < $FASTA_LIST
 
-export UNMAPPED_LIST=$(mktemp)
-sed 's/.fasta/.unmapped/' $FASTA_LIST > $UNMAPPED_LIST
+`cp $FASTA_LIST $BT2_OUT_DIR`
 
-JOB_ID2=$(qsub $JOBS_ARG -v UNMAPPED_LIST,SCRIPT_DIR,BT2_OUT_DIR,CLARK_OUT_DIR,CLARK_DIR,CLARK_DB,UNMAPPED,KMER_SIZE,MODE,NUM_THREAD,STEP_SIZE -N CLARK -W depend=afterok:$JOB_ID1 -j -oe "$STDOUT_DIR" $SCRIPT_DIR/run_clark.sh)
+cd "$BT2_OUT_DIR"
+export UNMAPPED_LIST="$BT2_OUT_DIR/unmapped-list"
+`sed 's/.fasta/.unmapped/' fasta-list > $UNMAPPED_LIST`
 
-rm $UNMAPPED_LIST
+while read UNMAPPED; do
+    export UNMAPPED="$UNMAPPED"
+    
+    JOB_ID2=`qsub -v SCRIPT_DIR,BT2_OUT_DIR,CLARK_OUT_DIR,CLARK_DIR,CLARK_DB,UNMAPPED,KMER_SIZE,MODE,NUM_THREAD -N CLARK -W depend=afterok:$JOB_ID1 -e "$STDERR_DIR" -o "$STDOUT_DIR" $SCRIPT_DIR/run_clark.sh`
+
+done < $UNMAPPED_LIST
